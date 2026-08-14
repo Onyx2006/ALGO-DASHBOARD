@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALGO::DASHBOARD — Motor de Algoritmos Puros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-glyph">&gt;_</span>
+      <div class="brand-text">
+        <strong>ALGO::DASHBOARD</strong>
+        <small>vanilla js // zero deps</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-module="pathfinding">
+        <span class="nav-index">01</span>
+        <span class="nav-label">Pathfinding &amp; Maze Engine</span>
+        <span class="nav-tag">grafos</span>
+      </button>
+      <button class="nav-item" data-module="snake">
+        <span class="nav-index">02</span>
+        <span class="nav-label">Agentes Autónomos</span>
+        <span class="nav-tag">IA nativa</span>
+      </button>
+      <button class="nav-item" data-module="boids">
+        <span class="nav-index">03</span>
+        <span class="nav-label">Bandadas (Boids)</span>
+        <span class="nav-tag">vectores</span>
+      </button>
+      <button class="nav-item" data-module="voronoi">
+        <span class="nav-index">04</span>
+        <span class="nav-label">Geometría Computacional</span>
+        <span class="nav-tag">espacio</span>
+      </button>
+      <button class="nav-item" data-module="conway">
+        <span class="nav-index">05</span>
+        <span class="nav-label">Autómatas Celulares</span>
+        <span class="nav-tag">Juego de la Vida</span>
+      </button>
+      <button class="nav-item" data-module="sorting">
+        <span class="nav-index">06</span>
+        <span class="nav-label">Ordenamiento + Audio</span>
+        <span class="nav-tag">sonificación</span>
+      </button>
+      <button class="nav-item" data-module="mandelbrot">
+        <span class="nav-index">07</span>
+        <span class="nav-label">Fractal de Mandelbrot</span>
+        <span class="nav-tag">nº complejos</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="fps-live">
+        <span class="dot"></span>
+        <span id="global-fps">-- FPS</span>
+      </div>
+      <small>Canvas2D nativo · ES6+ · sin librerías</small>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- MODULE 01: PATHFINDING & MAZE ENGINE -->
+    <section class="module active" id="module-pathfinding">
+      <header class="module-header">
+        <div>
+          <h1>01 · Pathfinding &amp; Maze Engine</h1>
+          <p>BFS · A* (heurística Manhattan) · Generación procedural de laberintos (Backtracking DFS)</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Algoritmo</label>
+            <select id="pf-algo">
+              <option value="astar">A* (A-Estrella)</option>
+              <option value="bfs">BFS (Anchura)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Velocidad</label>
+            <input type="range" id="pf-speed" min="1" max="10" value="6">
+          </div>
+          <button class="btn" id="pf-run">▶ Ejecutar</button>
+          <button class="btn" id="pf-maze">⚙ Generar laberinto</button>
+          <button class="btn btn-ghost" id="pf-clear">✕ Limpiar muros</button>
+          <button class="btn btn-ghost" id="pf-reset">↺ Reset</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Imagina un mapa cuadriculado con un punto de partida (verde) y uno de llegada (rojo). El programa tiene que encontrar el camino más corto esquivando los muros que dibujes. <b>BFS</b> explora "en anillos" a partir del origen, como ondas en el agua, hasta tocar el destino. <b>A*</b> hace lo mismo pero es más listo: prioriza explorar hacia donde "intuye" que está el destino (usando la distancia en línea recta como pista), por lo que llega antes explorando menos casillas. El botón "Generar laberinto" crea un laberinto perfecto (con una única solución posible) usando el mismo principio con el que un explorador cava túneles sin cruzarse nunca a sí mismo.
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="pf-canvas" width="820" height="560"></canvas>
+          <p class="hint">Click y arrastra: pintar/borrar muros · Click derecho: mover origen · Shift+Click: mover destino</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="pf-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo de ejecución</span><strong id="pf-time">0.00 ms</strong></div>
+          <div class="metric"><span>Nodos explorados</span><strong id="pf-visited">0</strong></div>
+          <div class="metric"><span>Nodos en frontera</span><strong id="pf-frontier">0</strong></div>
+          <div class="metric"><span>Longitud del camino</span><strong id="pf-pathlen">0</strong></div>
+          <div class="metric"><span>Complejidad teórica</span><strong id="pf-complexity">O(V + E)</strong></div>
+          <h3>Leyenda</h3>
+          <ul class="legend">
+            <li><i class="sw sw-start"></i> Origen</li>
+            <li><i class="sw sw-end"></i> Destino</li>
+            <li><i class="sw sw-wall"></i> Muro</li>
+            <li><i class="sw sw-visited"></i> Explorado</li>
+            <li><i class="sw sw-frontier"></i> Frontera</li>
+            <li><i class="sw sw-path"></i> Camino óptimo</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 02: AGENTES AUTÓNOMOS -->
+    <section class="module" id="module-snake">
+      <header class="module-header">
+        <div>
+          <h1>02 · Agentes Autónomos y Redes Evolutivas</h1>
+          <p>Snake resuelto por A* determinista o por una red neuronal evolucionada mediante algoritmo genético</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Motor</label>
+            <select id="sn-mode">
+              <option value="astar">A* (Determinista)</option>
+              <option value="genetic">Red Neuronal Evolutiva</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Velocidad</label>
+            <input type="range" id="sn-speed" min="1" max="20" value="8">
+          </div>
+          <button class="btn" id="sn-run">▶ Iniciar</button>
+          <button class="btn btn-ghost" id="sn-pause">⏸ Pausar</button>
+          <button class="btn btn-ghost" id="sn-reset">↺ Reset</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Dos formas distintas de "resolver" Snake sin manos humanas. El motor <b>A*</b> es puramente calculador: en cada paso recalcula matemáticamente el camino más corto hacia la manzana, tratando su propia cola como una pared. El motor <b>Evolutivo</b> es más parecido a la naturaleza: empieza con 150 "cerebros" digitales completamente aleatorios (redes neuronales) que juegan fatal, pero tras cada generación se cruzan los mejores entre sí y se añaden pequeñas mutaciones al azar — igual que la selección natural — hasta que, generación tras generación, algunos cerebros aprenden a jugar bien por sí solos, sin que nadie les programe las reglas explícitamente.
+      </div>
+
+      <div class="module-body three-col">
+        <div class="canvas-wrap">
+          <canvas id="sn-canvas" width="480" height="480"></canvas>
+        </div>
+
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="sn-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo/frame</span><strong id="sn-time">0.00 ms</strong></div>
+          <div class="metric"><span>Score</span><strong id="sn-score">0</strong></div>
+          <div class="metric"><span>Generación</span><strong id="sn-gen">—</strong></div>
+          <div class="metric"><span>Mejor fitness (gen)</span><strong id="sn-fitness">—</strong></div>
+          <div class="metric"><span>Población viva</span><strong id="sn-alive">—</strong></div>
+          <h3>Hiperparámetros GA</h3>
+          <div class="metric"><span>Población</span><strong>150</strong></div>
+          <div class="metric"><span>Tasa de mutación</span><strong>8%</strong></div>
+          <div class="metric"><span>Elitismo</span><strong>top 10%</strong></div>
+        </aside>
+
+        <aside class="nn-panel">
+          <h3>Anatomía de la red neuronal</h3>
+          <p class="nn-desc">Perceptrón multicapa <code>8 → 12 → 4</code>. 8 sensores raycast (distancia a muro, cuerpo y manzana en 8 direcciones), 1 capa oculta con activación <code>tanh</code>, 4 salidas softmax-argmax (↑ ↓ ← →).</p>
+          <canvas id="nn-canvas" width="380" height="330"></canvas>
+          <div class="nn-formula">
+            <code>h = tanh(W₁·x + b₁)</code>
+            <code>y = tanh(W₂·h + b₂)</code>
+            <code>dirección = argmax(y)</code>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 03: BOIDS -->
+    <section class="module" id="module-boids">
+      <header class="module-header">
+        <div>
+          <h1>03 · Comportamiento de Bandadas (Boids)</h1>
+          <p>Sistema emergente de Craig Reynolds: separación, alineación y cohesión vectorial en tiempo real</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Población</label>
+            <input type="range" id="bd-count" min="20" max="400" value="150">
+          </div>
+          <div class="control-group">
+            <label>Velocidad máx.</label>
+            <input type="range" id="bd-speed" min="1" max="8" value="4">
+          </div>
+          <button class="btn" id="bd-run">▶ Iniciar</button>
+          <button class="btn btn-ghost" id="bd-pause">⏸ Pausar</button>
+          <button class="btn btn-ghost" id="bd-reset">↺ Reset</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Cada triángulo es un agente independiente que no recibe ninguna orden central; simplemente sigue tres instintos simples mirando solo a sus vecinos cercanos: no chocar con ellos (separación), ir a la velocidad del grupo (alineación) y no alejarse demasiado (cohesión). De la suma de estas tres reglas tan sencillas emerge, como por arte de magia, el comportamiento realista de una bandada de pájaros o un banco de peces. Prueba a mover el ratón sobre el lienzo: actuarás como un depredador y verás cómo el grupo se dispersa y se reorganiza solo.
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="bd-canvas" width="820" height="560"></canvas>
+          <p class="hint">Click y mantén: coloca un depredador que dispersa la bandada</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="bd-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo/frame</span><strong id="bd-time">0.00 ms</strong></div>
+          <div class="metric"><span>Agentes activos</span><strong id="bd-agents">0</strong></div>
+          <div class="metric"><span>Fuerzas calculadas</span><strong id="bd-forces">0</strong></div>
+          <div class="metric"><span>FPS</span><strong id="bd-fps">0</strong></div>
+          <div class="metric"><span>Complejidad</span><strong>O(n²) por frame</strong></div>
+          <h3>Pesos de comportamiento</h3>
+          <div class="metric"><span>Separación</span><strong>1.5</strong></div>
+          <div class="metric"><span>Alineación</span><strong>1.0</strong></div>
+          <div class="metric"><span>Cohesión</span><strong>1.0</strong></div>
+          <div class="metric"><span>Evasión depredador</span><strong>3.0</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 04: VORONOI -->
+    <section class="module" id="module-voronoi">
+      <header class="module-header">
+        <div>
+          <h1>04 · Geometría Computacional — Diagramas de Voronoi</h1>
+          <p>Partición del espacio por distancia euclídea mínima a un conjunto de semillas dinámicas</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Modo</label>
+            <select id="vr-mode">
+              <option value="pixel">Raster (por píxel)</option>
+              <option value="follow">Seguir ratón</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Resolución</label>
+            <input type="range" id="vr-res" min="1" max="8" value="3">
+          </div>
+          <button class="btn" id="vr-add">+ Añadir semillas</button>
+          <button class="btn btn-ghost" id="vr-clear">✕ Limpiar</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Coloca unos cuantos puntos ("semillas") sobre el lienzo. El programa colorea cada píxel de la pantalla según de qué semilla está más cerca, formando un mosaico de regiones — como si cada semilla "reclamara" el territorio que le queda más a mano. Este tipo de partición del espacio se usa en la vida real para cosas tan distintas como calcular la zona de cobertura de antenas de telefonía o modelar el crecimiento de células biológicas.
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="vr-canvas" width="820" height="560"></canvas>
+          <p class="hint">Click: añadir semilla · Modo "Seguir ratón": el cursor es una semilla viva</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="vr-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo de cómputo</span><strong id="vr-time">0.00 ms</strong></div>
+          <div class="metric"><span>Semillas</span><strong id="vr-seeds">0</strong></div>
+          <div class="metric"><span>Celdas rasterizadas</span><strong id="vr-cells">0</strong></div>
+          <div class="metric"><span>Complejidad</span><strong>O(W·H·n)</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 05: CONWAY'S GAME OF LIFE -->
+    <section class="module" id="module-conway">
+      <header class="module-header">
+        <div>
+          <h1>05 · Autómatas Celulares — El Juego de la Vida</h1>
+          <p>Autómata celular de Conway: 4 reglas locales sobre vecindad de Moore (8 vecinos)</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Velocidad</label>
+            <input type="range" id="cv-speed" min="1" max="15" value="6">
+          </div>
+          <div class="control-group">
+            <label>Patrón</label>
+            <select id="cv-pattern">
+              <option value="none">— Cargar patrón —</option>
+              <option value="glider">Glider</option>
+              <option value="pulsar">Pulsar</option>
+              <option value="gosper">Gosper Glider Gun</option>
+            </select>
+          </div>
+          <button class="btn" id="cv-run">▶ Iniciar</button>
+          <button class="btn btn-ghost" id="cv-pause">⏸ Pausar (dibujar)</button>
+          <button class="btn btn-ghost" id="cv-step">⏭ Paso a paso</button>
+          <button class="btn btn-ghost" id="cv-random">🎲 Aleatorio</button>
+          <button class="btn btn-ghost" id="cv-reset">↺ Reset</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Una cuadrícula donde cada casilla está "viva" o "muerta". En cada instante, todas las casillas se actualizan a la vez siguiendo 4 reglas muy simples según cuántas vecinas vivas tengan alrededor (de las 8 que la rodean): una casilla viva con pocas vecinas muere de soledad, con demasiadas muere de sobrepoblación, con 2 o 3 sobrevive, y una casilla muerta con exactamente 3 vecinas vivas nace. Ninguna regla dice "forma un patrón concreto" — y sin embargo, de esa simplicidad surgen estructuras que se mueven, oscilan o incluso "disparan" nuevas formas indefinidamente, como el famoso "Gosper Glider Gun". Pausa la simulación para dibujar tus propias células con el ratón.
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="cv-canvas" width="900" height="600"></canvas>
+          <p class="hint">Con la simulación en pausa: click y arrastra para pintar/borrar células vivas</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="cv-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo/generación</span><strong id="cv-time">0.00 ms</strong></div>
+          <div class="metric"><span>Generación</span><strong id="cv-gen">0</strong></div>
+          <div class="metric"><span>Células vivas</span><strong id="cv-alive">0</strong></div>
+          <div class="metric"><span>Nacimientos (última gen.)</span><strong id="cv-born">0</strong></div>
+          <div class="metric"><span>Muertes (última gen.)</span><strong id="cv-died">0</strong></div>
+          <div class="metric"><span>Complejidad</span><strong>O(W·H)</strong></div>
+          <h3>Reglas de Conway</h3>
+          <ul class="legend">
+            <li><i class="sw sw-wall"></i> &lt;2 vecinas → muere (soledad)</li>
+            <li><i class="sw sw-path"></i> 2–3 vecinas → sobrevive</li>
+            <li><i class="sw sw-wall"></i> &gt;3 vecinas → muere (sobrepoblación)</li>
+            <li><i class="sw sw-frontier"></i> muerta + 3 vecinas → nace</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 06: SORTING VISUALIZER + AUDIO -->
+    <section class="module" id="module-sorting">
+      <header class="module-header">
+        <div>
+          <h1>06 · Visualizador de Ordenamiento con Banda Sonora</h1>
+          <p>Bubble Sort · QuickSort · Merge Sort — sonificados con Web Audio API en tiempo real</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Algoritmo</label>
+            <select id="so-algo">
+              <option value="bubble">Bubble Sort</option>
+              <option value="quick">QuickSort</option>
+              <option value="merge">Merge Sort</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Velocidad</label>
+            <input type="range" id="so-speed" min="1" max="20" value="8">
+          </div>
+          <label class="checkbox-inline"><input type="checkbox" id="so-mute"> Silenciar</label>
+          <button class="btn" id="so-run">▶ Ordenar</button>
+          <button class="btn btn-ghost" id="so-pause">⏸ Pausar</button>
+          <button class="btn btn-ghost" id="so-reset">↺ Reset (mezclar)</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Cada barra representa un número; cuanto más alta, mayor es el valor. Los tres algoritmos ordenan de menor a mayor pero con estrategias distintas: <b>Bubble Sort</b> compara parejas de barras vecinas una y otra vez, "burbujeando" el valor más grande hacia el final (es el más simple, pero también el más lento). <b>QuickSort</b> elige una barra como "pivote" y separa a las demás en menores y mayores que ella, repitiendo el proceso en cada mitad (muy rápido en la práctica). <b>Merge Sort</b> divide la fila por la mitad una y otra vez hasta quedarse con piezas sueltas, y luego las va fusionando ya ordenadas (garantiza siempre buena velocidad, pero necesita memoria extra). Cada comparación o movimiento genera además una nota musical cuya altura depende del valor de la barra — así cada algoritmo tiene una "melodía" reconocible propia según cómo accede a los datos.
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="so-canvas" width="900" height="440"></canvas>
+          <p class="hint">El sonido requiere una interacción previa del navegador: pulsa "Ordenar" para activar el audio</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="so-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo/paso</span><strong id="so-time">0.00 ms</strong></div>
+          <div class="metric"><span>Comparaciones</span><strong id="so-comparisons">0</strong></div>
+          <div class="metric"><span>Intercambios / escrituras</span><strong id="so-swaps">0</strong></div>
+          <div class="metric"><span>Complejidad</span><strong id="so-complexity">O(n²) / O(1) espacio</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MODULE 07: MANDELBROT FRACTAL -->
+    <section class="module" id="module-mandelbrot">
+      <header class="module-header">
+        <div>
+          <h1>07 · Fractales Matemáticos — Conjunto de Mandelbrot</h1>
+          <p>Iteración compleja Z = Z² + C, renderizado por escape-time sobre ImageData</p>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Iteraciones máx.</label>
+            <input type="range" id="mb-iterations" min="50" max="500" value="100">
+          </div>
+          <button class="btn btn-ghost" id="mb-reset">↺ Vista inicial</button>
+        </div>
+      </header>
+
+      <div class="explain-box">
+        <strong>¿Qué es esto?</strong> Cada punto de la imagen representa un número (de un tipo especial llamado "número complejo"). Para cada punto, el programa repite una operación matemática muy simple una y otra vez: elevarlo al cuadrado y sumarle su valor original. Si al repetir esto el resultado "sale disparado" hacia el infinito, el punto se pinta de un color según lo rápido que escapó; si nunca escapa, se queda casi negro — esos son los puntos que forman el conjunto de Mandelbrot. Lo fascinante es que este proceso tan sencillo genera un patrón infinitamente detallado: haz click y arrastra para seleccionar una zona y hacer zoom, y descubrirás que, por mucho que te acerques, siempre aparecen nuevos detalles y formas similares a las de la imagen completa (doble-click para un zoom rápido centrado en el cursor).
+      </div>
+
+      <div class="module-body two-col">
+        <div class="canvas-wrap">
+          <canvas id="mb-canvas" width="820" height="560"></canvas>
+          <p class="hint">Click y arrastra: selecciona una región para hacer zoom · Doble click: zoom rápido centrado en el cursor</p>
+        </div>
+        <aside class="metrics-panel">
+          <h3>Métricas en tiempo real</h3>
+          <div class="metric"><span>Estado</span><strong id="mb-state">Inactivo</strong></div>
+          <div class="metric"><span>Tiempo de render</span><strong id="mb-time">0.00 ms</strong></div>
+          <div class="metric"><span>Iteraciones máx.</span><strong id="mb-iter">100</strong></div>
+          <div class="metric"><span>Nivel de zoom</span><strong id="mb-zoom">1.0×</strong></div>
+          <div class="metric"><span>Píxeles dentro del conjunto</span><strong id="mb-inset">0</strong></div>
+          <div class="metric"><span>Complejidad</span><strong>O(W·H·iter)</strong></div>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/pathfinding.js"></script>
+<script src="js/neuralnet.js"></script>
+<script src="js/snake.js"></script>
+<script src="js/boids.js"></script>
+<script src="js/voronoi.js"></script>
+<script src="js/conway.js"></script>
+<script src="js/sorting.js"></script>
+<script src="js/mandelbrot.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
